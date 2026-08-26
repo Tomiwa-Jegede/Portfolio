@@ -109,9 +109,13 @@ useEffect(() => {
           <Link
             to="/"
             onClick={(e) => handleNavClick(e, links[0])}
-            className="font-display font-bold text-lg tracking-tight"
+            className="flex items-center"
           >
-            <span className="gradient-text">VCT.</span>
+            <img
+              src="/images/vctdev_logo.svg"
+              alt="Victor logo"
+              className="h-8 md:h-12 w-auto"
+            />
           </Link>
 
           {/* Desktop links */}
