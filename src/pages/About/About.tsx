@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 
 const skills = [
   "Full Stack Web Development",
@@ -22,11 +23,20 @@ const itemVariants = {
   }),
 };
 
-export default function About() {
+export default function About({ standalone = false }: { standalone?: boolean }) {
   const mobile = isMobileViewport();
-
+  const HeadingTag = standalone ? motion.h1 : motion.h2;
   return (
-    <section className="min-h-screen bg-[#050508] flex items-center px-6 py-32">
+    <>
+      <Helmet>
+        <title>About — Victor</title>
+        <meta
+          name="description"
+          content="Learn more about Victor, a Full Stack Developer who builds revenue systems, not just websites."
+        />
+        <link rel="canonical" href="https://vctdev.netlify.app/" />
+      </Helmet>
+      <section className="min-h-screen bg-[#050508] flex items-center px-6 py-32">
       <div className="max-w-5xl mx-auto w-full">
         {/* Eyebrow */}
         <motion.p
@@ -47,7 +57,7 @@ export default function About() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           {/* Left — story */}
           <div>
-            <motion.h2
+            <HeadingTag
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{
@@ -62,7 +72,7 @@ export default function About() {
               <span className="gradient-text">websites.</span>
               <br />I build systems that{" "}
               <span className="gradient-text">grow businesses.</span>
-            </motion.h2>
+            </HeadingTag>
 
             {[
               "I'm Victor — a Full Stack Developer who works across the entire product lifecycle, from designing user experiences and building scalable frontends to developing backend systems, APIs, databases, and automation workflows.",
@@ -152,6 +162,7 @@ export default function About() {
           </div>
         </div>
       </div>
-    </section>
+      </section>
+    </>
   );
 }

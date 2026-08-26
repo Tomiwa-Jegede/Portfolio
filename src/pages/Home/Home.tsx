@@ -10,6 +10,7 @@ import About from "@/pages/About/About";
 import Projects from "@/pages/Projects/Projects";
 import Contact from "@/pages/Contact/Contact";
 import BuildSequence from "@/components/ide/BuildSequence";
+import { Helmet } from "react-helmet-async";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
@@ -205,15 +206,36 @@ export default function Home() {
 
   if (isMobile === null) return null;
 
-  if (!buildComplete) {
+   if (!buildComplete) {
     return (
-      <BuildSequence
-        onEnter={() => {
-          setBuildComplete(true);
-        }}
-      />
+      <>
+        <Helmet>
+          <title>Victor — Revenue Systems Developer</title>
+          <meta
+            name="description"
+            content="Victor — Full Stack Developer. I build revenue systems, not just websites."
+          />
+          <link rel="canonical" href="https://vctdev.netlify.app/" />
+        </Helmet>
+        <BuildSequence
+          onEnter={() => {
+            setBuildComplete(true);
+          }}
+        />
+      </>
     );
   }
-
-  return isMobile ? <MobileHome /> : <DesktopHome />;
+  return (
+    <>
+      <Helmet>
+        <title>Victor — Revenue Systems Developer</title>
+        <meta
+          name="description"
+          content="Victor — Full Stack Developer. I build revenue systems, not just websites."
+        />
+        <link rel="canonical" href="https://vctdev.netlify.app/" />
+      </Helmet>
+      {isMobile ? <MobileHome /> : <DesktopHome />}
+    </>
+  );
 }

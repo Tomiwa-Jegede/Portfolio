@@ -6,6 +6,7 @@ import {
   useTransform,
 } from "framer-motion";
 import { useRef, useState } from "react";
+import { Helmet } from "react-helmet-async";
 
 const isMobileViewport = () =>
   typeof window !== "undefined" && window.innerWidth < 768;
@@ -255,12 +256,22 @@ function ProjectCard({
   );
 }
 
-export default function Projects() {
+export default function Projects({ standalone = false }: { standalone?: boolean }) {
   const mobile = isMobileViewport();
   const [activeIndex, setActiveIndex] = useState(0);
+  const HeadingTag = standalone ? motion.h1 : motion.h2;
 
   return (
-    <section className="min-h-screen bg-[#050508] flex items-center px-6 py-32">
+    <>
+      <Helmet>
+        <title>Projects — Victor</title>
+        <meta
+          name="description"
+          content="A selection of full-stack projects built by Victor — e-commerce platforms, marketplaces, and revenue automation systems."
+        />
+        <link rel="canonical" href="https://vctdev.netlify.app/" />
+      </Helmet>
+      <section className="min-h-screen bg-[#050508] flex items-center px-6 py-32">
       <div className="max-w-5xl mx-auto w-full">
         <motion.p
           initial={{ opacity: 0, x: -20 }}
@@ -276,7 +287,7 @@ export default function Projects() {
           Projects
         </motion.p>
 
-        <motion.h2
+        <HeadingTag
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{
@@ -288,7 +299,7 @@ export default function Projects() {
           className="font-display font-bold text-[clamp(2.5rem,6vw,4.5rem)] leading-none tracking-tighter mb-16"
         >
           Things I've <span className="gradient-text">shipped.</span>
-        </motion.h2>
+        </HeadingTag>
 
         {mobile ? (
           <div className="space-y-6">
@@ -357,6 +368,7 @@ export default function Projects() {
           </div>
         )}
       </div>
-    </section>
+      </section>
+    </>
   );
 }

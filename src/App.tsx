@@ -12,6 +12,7 @@ const Home = lazy(() => import("./pages/Home/Home"));
 const Projects = lazy(() => import("./pages/Projects/Projects"));
 const About = lazy(() => import("./pages/About/About"));
 const Contact = lazy(() => import("./pages/Contact/Contact"));
+const NotFound = lazy(() => import("./pages/NotFound/NotFound"));
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -22,9 +23,10 @@ function AnimatedRoutes() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Home />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/projects" element={<Projects standalone />} />
+          <Route path="/about" element={<About standalone />} />
+          <Route path="/contact" element={<Contact standalone />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
     </>
