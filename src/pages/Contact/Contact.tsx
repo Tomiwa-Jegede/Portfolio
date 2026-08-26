@@ -40,13 +40,19 @@ export default function Contact({ standalone = false }: { standalone?: boolean }
     e.preventDefault();
     setStatus("sending");
     try {
-      const res = await fetch(import.meta.env.VITE_GOOGLE_SCRIPT_URL, {
+      const res = await fetch("https://formspree.io/f/xjyvbvkv", {
         method: "POST",
         headers: {
-          "Content-Type": "text/plain;charset=utf-8",
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify(form),
       });
+
+      if (!res.ok) {
+        throw new Error("Form submission failed");
+      }
+
       setStatus("sent");
       setForm({
         name: "",

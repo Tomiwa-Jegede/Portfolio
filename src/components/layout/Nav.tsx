@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useMotionValueEvent } from "framer-motion";
+import { useLenisScrollContext } from "@/context/LenisScrollContext";
 
 const links = [
   { to: "/", label: "Home", section: "hero", scrollTarget: 0 },
@@ -17,6 +18,7 @@ const links = [
 export default function Nav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { scrollYProgress } = useLenisScrollContext();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("hero");
@@ -31,33 +33,25 @@ export default function Nav() {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  // Read activeSection from the data attribute set in Home
-useEffect(() => {
-  if (location.pathname !== "/") {
-    setActiveSection("hero");
-    return;
-  }
+  // Read activeSection from the shared Lenis scroll progress (same source as
+  // ScrollProgressBar and DesktopHome), so nav highlighting stays in sync.
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setActiveSection("hero");
+    }
+  }, [location.pathname]);
 
-  const handleScroll = () => {
-    const scrollY = window.scrollY;
-    const total = document.documentElement.scrollHeight - window.innerHeight;
-
-    const v = scrollY / total;
-
-    if (v < 0.18) setActiveSection("hero");
-    else if (v < 0.54) setActiveSection("about");
-    else if (v < 0.8) setActiveSection("projects");
-    else setActiveSection("contact");
-  };
-
-  window.addEventListener("scroll", handleScroll, {
-    passive: true,
-  });
-
-  handleScroll();
-
-  return () => window.removeEventListener("scroll", handleScroll);
-}, [location.pathname]);
+  useMotionValueEvent(
+    scrollYProgress ?? ({ on: () => () => {} } as any),
+    "change",
+    (v: number) => {
+      if (location.pathname !== "/") return;
+      if (v < 0.18) setActiveSection("hero");
+      else if (v < 0.54) setActiveSection("about");
+      else if (v < 0.8) setActiveSection("projects");
+      else setActiveSection("contact");
+    },
+  );
 
   const isActive = (link: (typeof links)[0]) => {
     if (location.pathname !== "/") {
