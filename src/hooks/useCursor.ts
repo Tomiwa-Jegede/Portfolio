@@ -22,6 +22,9 @@ export function useCursor() {
   const [, forceRender] = useState(0);
 
   useEffect(() => {
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (coarse || reduced) return;
     const onMove = (e: MouseEvent) => {
       const prev = state.current;
       state.current = {

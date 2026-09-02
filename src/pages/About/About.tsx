@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { canonicalFor } from "@/lib/canonical";
 
 const skills = [
   "Full Stack Web Development",
@@ -9,10 +11,6 @@ const skills = [
   "Conversion-Focused UX",
   "Business Process Automation",
 ];
-
-// Mobile-safe: no negative viewport margins, amount guard instead
-const isMobileViewport = () =>
-  typeof window !== "undefined" && window.innerWidth < 768;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -24,7 +22,8 @@ const itemVariants = {
 };
 
 export default function About({ standalone = false }: { standalone?: boolean }) {
-  const mobile = isMobileViewport();
+  const isMobile = useIsMobile();
+  const mobile = isMobile ?? false;
   const HeadingTag = standalone ? motion.h1 : motion.h2;
   return (
     <>
@@ -34,7 +33,7 @@ export default function About({ standalone = false }: { standalone?: boolean }) 
           name="description"
           content="Learn more about Victor, a Full Stack Developer who builds revenue systems, not just websites."
         />
-        <link rel="canonical" href="https://vctdev.netlify.app/" />
+        <link rel="canonical" href={canonicalFor("/about")} />
       </Helmet>
       <section className="min-h-screen bg-[#050508] flex items-center px-6 py-32">
       <div className="max-w-5xl mx-auto w-full">
@@ -145,9 +144,9 @@ export default function About({ standalone = false }: { standalone?: boolean }) 
               className="mt-12 grid grid-cols-3 gap-4"
             >
               {[
-                { value: "1", label: "SaaS Built" },
-                { value: "∞", label: "Problems Solved" },
-                { value: "100%", label: "Outcome-Driven" },
+                { value: "3", label: "Projects Shipped" },
+                { value: "2s", label: "Filter @100" },
+                { value: "Live", label: "Stores" },
               ].map(({ value, label }) => (
                 <div key={label} className="glass rounded-xl p-4 text-center">
                   <div className="font-display font-bold text-2xl gradient-text mb-1">

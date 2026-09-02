@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useMotionValueEvent } from "framer-motion";
 import { useLenisScrollContext } from "@/context/LenisScrollContext";
+import { useTheme } from "@/context/ThemeContext";
 
 const links = [
   { to: "/", label: "Home", section: "hero", scrollTarget: 0 },
@@ -18,10 +19,17 @@ const links = [
 export default function Nav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { scrollYProgress } = useLenisScrollContext();
+  const { scrollYProgress, lenis } = useLenisScrollContext();
+  const { theme, toggle } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("hero");
+  const [showSkip, setShowSkip] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowSkip(true), 1000);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
@@ -41,11 +49,45 @@ export default function Nav() {
     }
   }, [location.pathname]);
 
+  // Stacked (default) uses scroll + anchor offsets — exact sync (600vh thresholds don't apply)
+  // Pinned (?story=pinned) uses Lenis scrollYProgress thresholds (600vh)
+  useEffect(() => {
+    if (location.pathname !== "/") return;
+    const story = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("story") : null;
+    const isStacked = story !== "pinned";
+    if (!isStacked) return;
+    const handler = () => {
+      const sections = links
+        .map((l) => document.querySelector(`[data-section="${l.section}"]`) as HTMLElement | null)
+        .filter(Boolean) as HTMLElement[];
+      if (!sections.length) return;
+      const navOffset = 96;
+      const scrollPos = window.scrollY + navOffset + 40;
+      // find last section whose top is above scrollPos
+      let current = sections[0].dataset.section ?? "hero";
+      for (const el of sections) {
+        if (el.offsetTop <= scrollPos) current = el.dataset.section ?? current;
+      }
+      setActiveSection(current);
+    };
+    handler();
+    window.addEventListener("scroll", handler, { passive: true });
+    // also re-check after Home lazy mounts (StackedHome renders async)
+    const t = setTimeout(handler, 400);
+    return () => {
+      window.removeEventListener("scroll", handler);
+      clearTimeout(t);
+    };
+  }, [location.pathname]);
+
   useMotionValueEvent(
     scrollYProgress ?? ({ on: () => () => {} } as any),
     "change",
     (v: number) => {
       if (location.pathname !== "/") return;
+      const story = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("story") : null;
+      const isStacked = story !== "pinned";
+      if (isStacked) return; // stacked uses IntersectionObserver above
       if (v < 0.18) setActiveSection("hero");
       else if (v < 0.54) setActiveSection("about");
       else if (v < 0.8) setActiveSection("projects");
@@ -61,31 +103,50 @@ export default function Nav() {
   };
 
   const handleNavClick = (e: React.MouseEvent, link: (typeof links)[0]) => {
+    const story = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("story") : null;
+    const isStacked = story !== "pinned";
+    const prefersReduced = (lenis as unknown as { prefersReducedMotion?: boolean })?.prefersReducedMotion ?? window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const immediate = isStacked || prefersReduced;
+
+    const scrollToTarget = () => {
+      const selector = `[data-section="${link.section}"]`;
+      const el = document.querySelector(selector);
+      if (isStacked && el) {
+        el.scrollIntoView({ behavior: immediate ? "instant" as ScrollBehavior : "smooth", block: "start" });
+        // offset for fixed nav (56px)
+        if (!immediate) return;
+        const navOffset = 72;
+        const top = (el as HTMLElement).getBoundingClientRect().top + window.scrollY - navOffset;
+        window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
+        return;
+      }
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const target = link.scrollTarget * totalHeight;
+      if (lenis) lenis.scrollTo(target, { immediate, duration: immediate ? 0 : 0.6 });
+      else window.scrollTo({ top: target, behavior: immediate ? "instant" as ScrollBehavior : "smooth" });
+    };
+
     // If we're not on the home page, navigate there first then scroll
     if (location.pathname !== "/") {
       e.preventDefault();
       navigate("/");
-      // Wait for home page to mount then scroll
-      setTimeout(() => {
-        const totalHeight =
-          document.documentElement.scrollHeight - window.innerHeight;
-        window.scrollTo({
-          top: link.scrollTarget * totalHeight,
-          behavior: "smooth",
-        });
-      }, 100);
+      setTimeout(scrollToTarget, 120);
       return;
     }
 
-    // Already on home page — just scroll, no route change
     e.preventDefault();
-    const totalHeight =
-      document.documentElement.scrollHeight - window.innerHeight;
-    window.scrollTo({
-      top: link.scrollTarget * totalHeight,
-      behavior: "smooth",
-    });
+    scrollToTarget();
     setMenuOpen(false);
+  };
+
+  const handleSkip = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const target = document.querySelector('[data-section="projects"]');
+    if (target) {
+      target.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
+      return;
+    }
+    handleNavClick(e as unknown as React.MouseEvent, links[2]);
   };
 
   return (
@@ -136,7 +197,24 @@ export default function Nav() {
           </div>
 
           {/* CTA */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-3">
+            {showSkip && location.pathname === "/" && (
+              <button
+                onClick={handleSkip}
+                className="font-mono text-xs tracking-widest px-4 py-2 rounded-full border border-white/20 bg-black/60 text-ghost/70 backdrop-blur hover:border-violet-500/50 hover:text-ghost transition-colors"
+                aria-label="Skip story to projects"
+              >
+                Skip story → Projects
+              </button>
+            )}
+            <button
+              onClick={toggle}
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              className="w-9 h-9 rounded-full border border-white/10 bg-white/[0.04] flex items-center justify-center text-ghost/70 hover:text-ghost hover:border-violet-500/30 transition-colors"
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+            >
+              <span className="text-sm">{theme === "dark" ? "☀" : "☾"}</span>
+            </button>
             <Link
               to="/contact"
               onClick={(e) => handleNavClick(e, links[3])}
@@ -146,6 +224,13 @@ export default function Nav() {
             </Link>
           </div>
 
+          <button
+            onClick={toggle}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            className="md:hidden w-9 h-9 rounded-full border border-white/10 bg-white/[0.04] flex items-center justify-center text-ghost/70 mr-2"
+          >
+            <span className="text-sm">{theme === "dark" ? "☀" : "☾"}</span>
+          </button>
           {/* Mobile hamburger */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}

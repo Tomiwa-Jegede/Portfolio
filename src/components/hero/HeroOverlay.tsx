@@ -24,23 +24,29 @@ function scrollToSection(
   mobileSelector: string,
   lenis: Lenis | null,
 ) {
-  const isMobile = window.innerWidth <= 768;
+  const story = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("story") : null;
+  const isStacked = story !== "pinned";
+  const prefersReduced = (lenis as unknown as { prefersReducedMotion?: boolean })?.prefersReducedMotion ?? false;
+  const immediate = isStacked || prefersReduced;
 
-  if (isMobile) {
-    document
-      .querySelector(mobileSelector)
-      ?.scrollIntoView({ behavior: "smooth" });
+  // Stacked (default) uses anchor — exact top, nav offset handled by StackedHome sections
+  const el = document.querySelector(mobileSelector);
+  if (el && (isStacked || window.innerWidth <= 768)) {
+    el.scrollIntoView({ behavior: immediate ? "instant" as ScrollBehavior : "smooth", block: "start" });
+    if (immediate) {
+      const navOffset = 72;
+      const top = (el as HTMLElement).getBoundingClientRect().top + window.scrollY - navOffset;
+      window.scrollTo({ top, behavior: "instant" as ScrollBehavior });
+    }
     return;
   }
 
-  const totalHeight =
-    document.documentElement.scrollHeight - window.innerHeight;
+  const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
   const target = ratio * totalHeight;
-
   if (lenis) {
-    lenis.scrollTo(target, { duration: 1.2 });
+    lenis.scrollTo(target, { immediate, duration: immediate ? 0 : 0.6 });
   } else {
-    window.scrollTo({ top: target, behavior: "smooth" });
+    window.scrollTo({ top: target, behavior: immediate ? "instant" as ScrollBehavior : "smooth" });
   }
 }
 
@@ -90,16 +96,15 @@ export default function HeroOverlay() {
           variants={itemVariants}
           className="font-display text-[clamp(1rem,3vw,1.5rem)] font-light text-ghost/80 mb-3 tracking-wide"
         >
-          I build revenue systems,{" "}
-          <span className="text-ghost font-medium">not just websites.</span>
+          Revenue systems that{" "}
+          <span className="text-ghost font-medium">don't leak leads.</span>
         </motion.p>
 
         <motion.p
           variants={itemVariants}
           className="font-body text-sm text-ghost/60 mb-12 max-w-md mx-auto leading-relaxed"
         >
-          Helping businesses stop leaking revenue through automated lead
-          capture, AI responses, and conversion-first digital systems.
+          3 shipped — Convertly, Trend Tribe, Jegz Menswear → see case + live.
         </motion.p>
 
         <motion.div

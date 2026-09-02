@@ -7,17 +7,20 @@ import {
 } from "framer-motion";
 import { useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
-
-const isMobileViewport = () =>
-  typeof window !== "undefined" && window.innerWidth < 768;
+import { Link } from "react-router-dom";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { track } from "@/lib/analytics";
+import { canonicalFor } from "@/lib/canonical";
 
 export const projects = [
   {
     name: "Convertly",
+    slug: "convertly",
     tagline:
       "Revenue automation for businesses that can't afford to leak leads.",
     description:
       "A full-stack platform that combines conversion-focused websites, AI-powered customer engagement, automated booking systems, lead tracking dashboards, and follow-up workflows — all in one place.",
+    outcome: "Demo: 100+ msgs auto-answered + booking→follow-up (estimate)",
     stack: [
       "Next.js",
       "TypeScript",
@@ -28,15 +31,17 @@ export const projects = [
     ],
     link: "https://convertlly.netlify.app/",
     status: "live",
-    image: "/images/convertly.png" as string | null, // drop screenshot in /public/images/
+    image: "/images/convertly.webp" as string | null,
     accent: "#7c3aed",
   },
   {
     name: "Trend Tribe",
+    slug: "trend-tribe",
     tagline:
       "The student-only marketplace to buy, sell, and trade within your campus.",
     description:
       "A full-stack marketplace built for student communities — listings, real-time messaging, notifications, and JWT-based authentication, backed by a Prisma/PostgreSQL data layer and Cloudinary media delivery.",
+    outcome: "Pilot: 2s filter @100 listings (16 listings today)",
     stack: [
       "React",
       "Express.js",
@@ -45,16 +50,18 @@ export const projects = [
       "Cloudinary",
       "JWT Auth",
     ],
-      link: "https://trendtribee.netlify.app/",
+    link: "https://trendtribee.netlify.app/",
     status: "Live",
-    image: "/images/trendtribe.png" as string | null, // drop screenshot in /public/images/
+    image: "/images/trendtribe.webp" as string | null,
     accent: "#1340B8",
   },
   {
     name: "Jegz Menswear",
+    slug: "jegz-menswear",
     tagline: "A modern Nigerian menswear e-commerce experience.",
     description:
       "A full-stack e-commerce platform built for Jegz Menswear, featuring product discovery, size and inventory management, cart and checkout, made-to-measure ordering, Flutterwave payments, automated email marketing, and a production-ready admin system.",
+    outcome: "Live store ✓ — Flutterwave checkout at jegzmenswear.store",
     stack: [
       "React",
       "Vite",
@@ -73,7 +80,7 @@ export const projects = [
     ],
     link: "https://jegzmenswear.store/",
     status: "Live",
-    image: "/images/jegzmenswear.PNG" as string | null, // drop screenshot in /public/images/
+    image: "/images/jegzmenswear.webp" as string | null,
     accent: "#e5e5e5",
   },
 ];
@@ -87,7 +94,8 @@ function ProjectCard({
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
-  const mobile = isMobileViewport();
+  const isMobile = useIsMobile();
+  const mobile = isMobile ?? false;
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -135,7 +143,7 @@ function ProjectCard({
           onMouseMove={handleMouseMove}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={handleMouseLeave}
-          className="glass-strong rounded-2xl p-8 md:p-10 relative overflow-hidden cursor-none"
+          className="glass-strong rounded-2xl p-8 md:p-10 relative overflow-hidden"
           data-magnetic
         >
           {/* Glare layer */}
@@ -170,8 +178,11 @@ function ProjectCard({
                 </span>
               </div>
 
-              <p className="text-ghost/70 font-medium mb-3 text-[15px]">
+              <p className="text-ghost/70 font-medium mb-2 text-[15px]">
                 {project.tagline}
+              </p>
+              <p className="font-mono text-[11px] tracking-wide text-cyan-400/70 mb-3">
+                {project.outcome}
               </p>
               <p className="text-ghost/40 text-sm leading-relaxed mb-6 max-w-xl">
                 {project.description}
@@ -188,15 +199,23 @@ function ProjectCard({
                 ))}
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to={`/projects/${project.slug}`}
+                  onClick={() => track({ type: "VIEW_PROJECT_CLICK", project: project.slug, surface: "view-case" })}
+                  className="font-mono text-xs tracking-widest text-ghost border border-violet-500/30 rounded-xl px-5 py-3 hover:border-violet-500/60 hover:text-ghost transition-colors duration-300 bg-violet-500/10"
+                >
+                  View Case →
+                </Link>
                 {project.link ? (
                   <a
                     href={project.link}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => track({ type: "VIEW_PROJECT_CLICK", project: project.slug, surface: "external-live" })}
                     className="font-mono text-xs tracking-widest text-ghost/80 border border-white/10 rounded-xl px-5 py-3 hover:border-violet-500/50 hover:text-ghost transition-colors duration-300"
                   >
-                    View Project ↗
+                    View Live ↗
                   </a>
                 ) : (
                   <span className="font-mono text-xs tracking-widest text-ghost/20 border border-white/5 rounded-xl px-5 py-3 cursor-default">
@@ -224,9 +243,12 @@ function ProjectCard({
                   src={project.image}
                   alt={`${project.name} screenshot`}
                   className="w-full h-full object-cover object-top"
+                  loading="lazy"
+                  decoding="async"
+                  width={340}
+                  height={240}
                 />
               ) : (
-                // Placeholder shown until you add a screenshot
                 <div
                   className="w-full h-full flex items-center justify-center"
                   style={{ background: project.accent + "10" }}
@@ -257,7 +279,8 @@ function ProjectCard({
 }
 
 export default function Projects({ standalone = false }: { standalone?: boolean }) {
-  const mobile = isMobileViewport();
+  const isMobile = useIsMobile();
+  const mobile = isMobile ?? false;
   const [activeIndex, setActiveIndex] = useState(0);
   const HeadingTag = standalone ? motion.h1 : motion.h2;
 
@@ -269,7 +292,7 @@ export default function Projects({ standalone = false }: { standalone?: boolean 
           name="description"
           content="A selection of full-stack projects built by Victor — e-commerce platforms, marketplaces, and revenue automation systems."
         />
-        <link rel="canonical" href="https://vctdev.netlify.app/" />
+        <link rel="canonical" href={canonicalFor("/projects")} />
       </Helmet>
       <section className="min-h-screen bg-[#050508] flex items-center px-6 py-32">
       <div className="max-w-5xl mx-auto w-full">
