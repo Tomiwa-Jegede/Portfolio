@@ -1,4 +1,3 @@
-import Cursor from "@/components/ui/Cursor";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, MotionConfig, useMotionValue } from "framer-motion";
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
@@ -20,7 +19,6 @@ function AnimatedRoutes() {
   return (
     <>
       <ScrollProgressBar />
-      <Cursor />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Home />} />

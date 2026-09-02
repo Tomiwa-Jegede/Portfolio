@@ -3,7 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "./context/ThemeContext";
-import "wicg-inert";
 import "./index.css";
 
 const rootElement = document.getElementById("root");
